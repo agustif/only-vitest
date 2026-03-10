@@ -3,156 +3,271 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-      <title>only-test</title>
+    <title>only-vitest</title>
     <meta
       name="description"
-      content="Enforce Vitest in a repo and optionally intercept bare bun test with a repo-local Bun shim."
+      content="A narrower tool that silently redirects bare bun test to Vitest and keeps repos on a Vitest-only path."
     />
     <style>
+      @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap");
+
       :root {
-        color-scheme: light dark;
-        --bg: #0f172a;
-        --panel: #111827;
-        --line: #334155;
-        --text: #e5e7eb;
-        --muted: #94a3b8;
-        --accent: #22c55e;
-        --accent-2: #38bdf8;
+        color-scheme: dark;
+        --bg: #0f1110;
+        --panel: #171a18;
+        --panel-2: #1f2421;
+        --line: #313732;
+        --text: #f5f6f2;
+        --muted: #9aa196;
+        --green: #5ab86e;
+        --stone: #d1d5cb;
       }
+
+      * {
+        box-sizing: border-box;
+      }
+
       body {
         margin: 0;
-        font-family:
-          ui-sans-serif,
-          system-ui,
-          -apple-system,
-          BlinkMacSystemFont,
-          "Segoe UI",
-          sans-serif;
-        background:
-          radial-gradient(circle at top left, rgba(56, 189, 248, 0.18), transparent 28%),
-          radial-gradient(circle at top right, rgba(34, 197, 94, 0.18), transparent 25%),
-          var(--bg);
+        font-family: "Space Grotesk", "Avenir Next", sans-serif;
+        background: var(--bg);
         color: var(--text);
       }
+
       main {
-        max-width: 960px;
+        max-width: 980px;
         margin: 0 auto;
-        padding: 64px 24px 96px;
+        padding: 48px 24px 88px;
       }
-      .eyebrow {
-        color: var(--accent-2);
-        text-transform: uppercase;
-        letter-spacing: 0.12em;
-        font-size: 12px;
-        margin-bottom: 12px;
+
+      .shell {
+        border: 1px solid var(--line);
+        background: var(--panel);
       }
+
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+      }
+
+      .hero-copy,
+      .hero-side {
+        padding: 26px;
+      }
+
+      .hero-copy {
+        border-right: 1px solid var(--line);
+      }
+
       h1 {
-        font-size: clamp(42px, 8vw, 78px);
-        line-height: 0.96;
         margin: 0 0 16px;
+        font-size: clamp(44px, 8vw, 72px);
+        line-height: 0.95;
+        letter-spacing: -0.05em;
       }
+
       .lede {
+        margin: 0 0 24px;
         color: var(--muted);
         font-size: 18px;
-        line-height: 1.6;
-        max-width: 760px;
+        line-height: 1.65;
+        max-width: 560px;
       }
-      .panel {
-        margin-top: 28px;
-        background: rgba(17, 24, 39, 0.82);
+
+      .command {
         border: 1px solid var(--line);
-        border-radius: 18px;
-        padding: 20px;
-      }
-      pre {
-        margin: 0;
-        white-space: pre-wrap;
-        word-break: break-word;
+        background: #0d0f0e;
+        padding: 16px 18px;
+        font-family: "IBM Plex Mono", monospace;
         font-size: 14px;
-        line-height: 1.5;
+        line-height: 1.6;
       }
-      code {
-        font-family:
-          ui-monospace,
-          SFMono-Regular,
-          Menlo,
-          Monaco,
-          Consolas,
-          monospace;
-      }
-      .grid {
+
+      .stack {
         display: grid;
-        gap: 20px;
-        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-        margin-top: 32px;
+        gap: 14px;
       }
-      .card {
-        background: rgba(15, 23, 42, 0.85);
+
+      .stack .box {
         border: 1px solid var(--line);
-        border-radius: 18px;
-        padding: 20px;
+        background: var(--panel-2);
+        padding: 18px;
       }
-      h2 {
-        margin: 0 0 12px;
-        font-size: 20px;
+
+      .stack h2 {
+        margin: 0 0 8px;
+        font-size: 16px;
       }
-      p {
+
+      .stack p {
         margin: 0;
         color: var(--muted);
         line-height: 1.65;
       }
+
+      .steps {
+        margin-top: 18px;
+        display: grid;
+        gap: 18px;
+      }
+
+      .step {
+        display: grid;
+        grid-template-columns: 90px 1fr;
+        border: 1px solid var(--line);
+        background: var(--panel);
+      }
+
+      .step-index {
+        padding: 18px;
+        border-right: 1px solid var(--line);
+        font-family: "IBM Plex Mono", monospace;
+        color: var(--green);
+      }
+
+      .step-body {
+        padding: 18px;
+      }
+
+      .step-body h2 {
+        margin: 0 0 8px;
+        font-size: 17px;
+      }
+
+      .step-body p {
+        margin: 0 0 10px;
+        color: var(--muted);
+        line-height: 1.65;
+      }
+
+      .step-body pre {
+        margin: 0;
+        white-space: pre-wrap;
+        word-break: break-word;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 13px;
+        line-height: 1.65;
+        color: var(--stone);
+      }
+
       .footer {
-        margin-top: 36px;
+        margin-top: 22px;
         display: flex;
         flex-wrap: wrap;
-        gap: 14px;
+        gap: 16px;
       }
+
       a {
         color: var(--text);
+        text-decoration-color: rgba(255, 255, 255, 0.3);
+      }
+
+      @media (max-width: 860px) {
+        .hero {
+          grid-template-columns: 1fr;
+        }
+
+        .hero-copy {
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+
+        .step {
+          grid-template-columns: 1fr;
+        }
+
+        .step-index {
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
       }
     </style>
   </head>
   <body>
     <main>
-      <div class="eyebrow">only-test</div>
-      <h1>Enforce Vitest. Intercept `bun test`.</h1>
-      <p class="lede">
-        `only-test` lets a repo declare one approved test runner and, when activated, silently
-        redirects bare `bun test` to that runner. Supports `bun-test`, `vitest`, and `jest`.
-      </p>
-
-      <section class="panel">
-        <pre><code>curl -fsSL https://agustif.github.io/only-test/install.sh | bash</code></pre>
+      <section class="shell">
+        <div class="topbar">
+          <span>only-vitest</span>
+          <span>Vitest-only Bun interception</span>
+        </div>
+        <div class="hero">
+          <div class="hero-copy">
+            <h1>Keep the rule simple: Bun calls Vitest.</h1>
+            <p class="lede">
+              `only-vitest` is the stable narrow version of this idea. It exists for teams that do
+              not want a generic runner-policy system. The repo declares Vitest. The global Bun
+              shim makes bare `bun test` obey that choice.
+            </p>
+            <div class="command">
+              curl -fsSL https://agustif.github.io/only-vitest/install.sh | bash
+            </div>
+          </div>
+          <aside class="hero-side">
+            <div class="stack">
+              <div class="box">
+                <h2>One runner</h2>
+                <p>No adapter registry, no runner choice screen, no generic policy surface.</p>
+              </div>
+              <div class="box">
+                <h2>Low-noise setup</h2>
+                <p>
+                  Minimal repo policy, global shim by default, and optional script syncing when the
+                  team wants explicit package scripts.
+                </p>
+              </div>
+              <div class="box">
+                <h2>Stable branch</h2>
+                <p>
+                  Use this when Vitest is already your team standard and you want the smallest
+                  possible enforcement layer.
+                </p>
+              </div>
+            </div>
+          </aside>
+        </div>
       </section>
 
-      <section class="grid">
-        <article class="card">
-          <h2>What it solves</h2>
-          <p>
-            `bun run test`, `npm test`, and `pnpm test` all go through project scripts. Bare
-            `bun test` does not. `only-test` installs the missing policy boundary.
-          </p>
+      <section class="steps">
+        <article class="step">
+          <div class="step-index">step 01</div>
+          <div class="step-body">
+            <h2>Write repo policy</h2>
+            <p>Declare Vitest once so the repo has an explicit test-runner contract.</p>
+            <pre><code>only-vitest init</code></pre>
+          </div>
         </article>
-        <article class="card">
-          <h2>Quick start</h2>
-          <p>
-            Run `only-test install --runner vitest --sync-scripts`, then
-            `eval "$(only-test activate)"` in the target repo.
-          </p>
+        <article class="step">
+          <div class="step-index">step 02</div>
+          <div class="step-body">
+            <h2>Install the global shim</h2>
+            <p>Set up the machine-level Bun wrapper that makes bare `bun test` predictable.</p>
+            <pre><code>only-vitest setup-shell</code></pre>
+          </div>
         </article>
-        <article class="card">
-          <h2>Runners</h2>
-          <p>
-            First release supports `bun-test`, `vitest`, and `jest`. The global Bun shim silently
-            redirects `bun test` to the configured runner.
-          </p>
+        <article class="step">
+          <div class="step-index">step 03</div>
+          <div class="step-body">
+            <h2>Activate the path</h2>
+            <p>Prepend the global only-test bin directory so Bun is intercepted in this shell.</p>
+            <pre><code>eval "$(only-vitest activate)"</code></pre>
+          </div>
         </article>
       </section>
 
       <div class="footer">
-        <a href="https://github.com/agustif/only-test">GitHub</a>
-        <a href="https://github.com/agustif/only-test/releases">Releases</a>
-        <a href="https://github.com/agustif/only-test#readme">README</a>
+        <a href="https://github.com/agustif/only-vitest">GitHub</a>
+        <a href="https://github.com/agustif/only-vitest/releases">Releases</a>
+        <a href="https://github.com/agustif/only-vitest#readme">README</a>
       </div>
     </main>
   </body>
